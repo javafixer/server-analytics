@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Submit Minecraft Server</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Submit Your Minecraft Server</h1>
+    </header>
+    <div class="card">
+        <div class="controls" style="flex-direction:column;">
+            <input type="text" id="server-name" placeholder="Server Name">
+            <input type="text" id="server-ip" placeholder="Server IP (e.g., play.example.com)">
+            <div id="status-result" class="muted" style="margin-top:10px;">Status: Unknown</div>
+            <button id="submit-server" disabled>Submit Server</button>
+            <button id="back">back</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentStatus = 'unknown';
+let intervalId = null;
+
+async function checkServer(ip) {
+    if (!ip) return 'unknown';
+    try {
+        const res = await fetch(`/api/check?ip=${ip}`);
+        const data = await res.json();
+        return data.online ? 'online' : 'offline';
+    } catch {
+        return 'error';
+    }
+}
+
+function updateUI(status) {
+    const statusDiv = document.getElementById('status-result');
+    const submitBtn = document.getElementById('submit-server');
+
+    if (status === 'online') {
+        statusDiv.innerText = 'Server is online';
+        statusDiv.style.color = '#4ade80';
+        submitBtn.disabled = false;
+    } else if (status === 'offline') {
+        statusDiv.innerText = 'Server is offline';
+        statusDiv.style.color = '#f87171';
+        submitBtn.disabled = true;
+    } else {
+        statusDiv.innerText = 'Checking...';
+        statusDiv.style.color = '#facc15';
+        submitBtn.disabled = true;
+    }
+}
+
+// Start periodic checking every 4 seconds
+document.getElementById('server-ip').addEventListener('input', () => {
+    if (intervalId) clearInterval(intervalId);
+
+    const ip = document.getElementById('server-ip').value.trim();
+    updateUI('checking');
+    intervalId = setInterval(async () => {
+        currentStatus = await checkServer(ip);
+        updateUI(currentStatus);
+    }, 4000);
+});
+
+document.getElementById('submit-server').addEventListener('click', async () => {
+    if (currentStatus !== 'online') return alert('Server must be online to submit.');
+
+    const name = document.getElementById('server-name').value.trim();
+    const ip = document.getElementById('server-ip').value.trim();
+    if (!name || !ip) return alert('Enter both name and IP.');
+
+    try {
+        const res = await fetch('/api/submit', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ name, address: ip })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            alert('Server submitted successfully!');
+            document.getElementById('server-name').value = '';
+            document.getElementById('server-ip').value = '';
+            updateUI('unknown');
+        } else {
+            alert(data.error || 'Failed to submit server.');
+        }
+    } catch (err) {
+        alert('Error submitting server.');
+        console.error(err);
+    }
+});
+
+</script>
+<script>
+    document.getElementById('back').addEventListener('click', function() {
+        window.location.href = '/';
+    });
+</script>
+</body>
+</html>

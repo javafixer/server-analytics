@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Minecraft Server Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+
+</head>
+<body>
+  <div class="container" id="app">
+    <header>
+      <div>
+        <h1>Minecraft Server Analytics</h1>
+        <div class="muted">Check live server stats and track player growth over time (local history / CSV export)</div>
+      </div>
+      <div class="controls">
+        <input id="serverInput" type="text" placeholder="server.address:port or ip (e.g. play.example.com)" value="example.com" />
+        <button id="checkBtn">Check Now</button>
+        <button id="startBtn" class="ghost">Start Auto-Track</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <main>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div id="serverName" style="font-weight:700">—</div>
+              <div class="muted" id="serverAddr">—</div>
+            </div>
+            <div class="muted" id="lastChecked">Last checked: —</div>
+          </div>
+
+          <div style="margin-top:12px" class="stat-list">
+            <div class="stat">
+              <div class="muted">Players</div>
+              <div id="playersNow" style="font-size:22px;font-weight:700">—</div>
+              <div class="muted" id="playerSample">—</div>
+            </div>
+            <div class="stat">
+              <div class="muted">Version</div>
+              <div id="version" style="font-size:22px;font-weight:700">—</div>
+              <div class="muted" id="software">—</div>
+            </div>
+            <div class="stat">
+              <div class="muted">Ping</div>
+              <div id="ping" style="font-size:22px;font-weight:700">— ms</div>
+              <div class="muted" id="motd">—</div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px">
+            <canvas id="growthChart"></canvas>
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button id="addPoint" class="ghost">Add current point to history</button>
+            <button id="clearHistory" class="ghost">Clear history</button>
+            <button id="exportCsv" class="ghost">Export CSV</button>
+            <button id="importCsv" class="ghost">Import CSV</button>
+            <input id="fileInput" type="file" accept="text/csv" style="display:none" />
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:700">Live sample log</div>
+            <div class="muted">Samples stored locally in your browser (LocalStorage)</div>
+          </div>
+          <div class="history" id="historyList">No history yet.</div>
+        </div>
+      </main>
+
+      <aside class="sidebar">
+        <div class="card">
+          <div style="font-weight:700">Settings & Info</div>
+          <div style="margin-top:8px" class="small">
+            <p>By default this page tries a public status API (mcsrvstat). If you host your own analytics backend, swap <code>fetchStatus</code> with your endpoint.</p>
+            <p>Auto-track repeatedly samples every <span id="sampleIntervalDisplay">60</span> seconds while running and appends the player count to the chart.</p>
+            <p style="margin-top:8px">Demo mode: click <em>Check Now</em> without a reachable server to see a fake demo dataset.</p>
+          </div>
+          <hr style="opacity:0.06;margin:10px 0" />
+          <div style="display:flex;gap:8px;align-items:center;justify-content:space-between">
+            <div>
+              <div class="muted">Sampling interval (s)</div>
+              <input id="intervalInput" type="number" value="60" style="width:100px;margin-top:6px;padding:6px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:inherit" />
+            </div>
+            <div>
+              <div class="muted">Demo data</div>
+              <div style="margin-top:6px"><button id="demoBtn" class="ghost">Load demo</button></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <div style="font-weight:700">Notes</div>
+          <ul class="small" style="margin-top:8px;padding-left:18px">
+            <li>Public APIs may rate-limit you — use your own backend for production.</li>
+            <li>Local history is stored in LocalStorage; export CSV before clearing if you need it.</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+
+    <footer>
+      Built as a single-file HTML demo — tweak the fetch endpoint to integrate with your server analytics backend.
+    </footer>
+  </div>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="java.js"></script>
+
+</body>
+</html>

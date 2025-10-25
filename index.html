@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minecraft Server List</title>
+<style>
+:root{
+    --bg:#0f1724;
+    --card:#0b1220;
+    --muted:#94a3b8;
+    --accent:#60a5fa;
+    --glass:rgba(255,255,255,0.03)
+}
+*{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial}
+html,body,#app{height:100%;margin:0;background:linear-gradient(180deg,#071024 0%, #081423 60%);color:#e6eef8}
+.container{max-width:1100px;margin:28px auto;padding:18px}
+header{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+h1{font-size:26px;margin:0}
+.controls{display:flex;gap:10px;align-items:center;margin-top:12px;width:100%;flex-wrap:wrap}
+input[type=text]{flex:1;background:var(--card);border:1px solid rgba(255,255,255,0.03);padding:10px 12px;border-radius:10px;color:inherit;min-width:200px}
+button{background:linear-gradient(180deg,var(--accent),#3b82f6);border:none;padding:10px 16px;border-radius:10px;color:#04243a;font-weight:600;cursor:pointer;transition:0.2s}
+button:hover{opacity:0.85}
+.grid{display:grid;grid-template-columns:1fr 360px;gap:18px;margin-top:24px}
+.server-card{display:flex;flex-direction:column;gap:8px;transition:0.2s;border:1px solid rgba(255,255,255,0.03);padding:14px;border-radius:12px;background:var(--card);}
+.server-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.server-card h2{margin:0;font-size:20px}
+.server-card .players{font-size:14px;color:var(--muted)}
+.server-card .status{font-weight:600;font-size:13px}
+.card{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+.stat-list{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+.stat{flex:1;background:var(--glass);padding:10px;border-radius:10px;min-width:120px;text-align:center}
+.muted{color:var(--muted);font-size:13px}
+.history{max-height:260px;overflow:auto;margin-top:10px;border-radius:8px;padding:6px;background:rgba(255,255,255,0.01)}
+.row{display:flex;justify-content:space-between;gap:8px;padding:8px;border-radius:6px}
+footer{margin-top:28px;color:var(--muted);font-size:13px;text-align:center}
+@media (max-width:920px){
+    .grid{grid-template-columns:1fr;}
+    .controls{flex-direction:column;align-items:stretch}
+    input[type=text]{width:100%}
+}
+</style>
+</head>
+<body>
+<div id="app" class="container">
+    <header>
+        <h1>Minecraft Server List</h1>
+        <div class="controls">
+            <input id="serverSearch" type="text" placeholder="Search servers...">
+            <button id="searchBtn">Search</button>
+            <button id="submit">Submit Server</button>
+            
+        </div>
+    </header>
+
+    <div class="grid">
+        <!-- Server list -->
+        <div id="serverList"></div>
+
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="card">
+                <h3>Server Stats</h3>
+                <div class="stat-list">
+                    <div class="stat">
+                        <div>Total Servers</div>
+                        <div id="server">—</div>
+                    </div>
+                    <div class="stat">
+                        <div>Players Online</div>
+                        <div id="totalPlayers">—</div>
+                    </div>
+                    <div class="stat">
+                        <div>Top Server</div>
+                        <div id="topServer">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+    craft server analytics 2025
+    </footer>
+</div>
+
+<!-- Include your java.js -->
+<script src="java.js"></script>
+<script>
+// Fetch all server statuses concurrently
+async function updateServerList(){
+    const serverCards = Array.from(document.querySelectorAll('.server-card'));
+    const promises = serverCards.map(card => {
+        const addr = card.dataset.addr;
+        return fetchStatus(addr)
+            .catch(()=>demoStatus(addr))  // fallback if fetch fails
+            .then(status=>{
+                card.querySelector('.players').textContent = `${status.players} / ${status.maxplayers || '?' } players online`;
+                card.querySelector('.status').textContent = status.players > 0 ? 'Online' : 'Offline';
+                card.querySelector('.status').style.color = status.players > 0 ? '#34d399' : '#f87171';
+                return status;
+            });
+    });
+
+    const results = await Promise.all(promises);
+
+    // Update sidebar stats
+    let totalPlayers = 0;
+    let topServer = {name:'', players:0};
+    results.forEach(status=>{
+        totalPlayers += status.players;
+        if(status.players > topServer.players) topServer = {name: status.name, players: status.players};
+    });
+
+    document.getElementById('totalPlayers').textContent = totalPlayers;
+    document.getElementById('topServer').textContent = topServer.name;
+}
+
+// Run after DOM is loaded
+document.addEventListener('DOMContentLoaded', updateServerList);
+</script>
+
+<script>
+// Add clickable behavior to each server card
+function makeServerCardsClickable(){
+    const serverCards = document.querySelectorAll('.server-card');
+    serverCards.forEach(card=>{
+        const addr = card.dataset.addr;
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', ()=>{
+            // Navigate to ana.html with query ?server=...
+            window.location.href = `analytics.html?${encodeURIComponent(addr)}`;
+        });
+    });
+}
+
+// Run after DOM is loaded
+document.addEventListener('DOMContentLoaded', makeServerCardsClickable);
+
+</script>
+<script>
+        document.getElementById('submit').addEventListener('click', function() {
+        window.location.href = 'submit.html';
+    });
+</script>
+</body>
+</html>

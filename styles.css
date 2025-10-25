@@ -1,0 +1,22 @@
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#94a3b8;--accent:#60a5fa;--glass:rgba(255,255,255,0.03)}
+    *{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial}
+    html,body,#app{height:100%;margin:0;background:linear-gradient(180deg,#071024 0%, #081423 60%);color:#e6eef8}
+    .container{max-width:1100px;margin:28px auto;padding:18px}
+    header{display:flex;gap:16px;align-items:center;justify-content:space-between}
+    h1{font-size:20px;margin:0}
+    .controls{display:flex;gap:10px;align-items:center}
+    input[type=text]{background:var(--card);border:1px solid rgba(255,255,255,0.03);padding:8px 10px;border-radius:8px;color:inherit;min-width:260px}
+    button{background:linear-gradient(180deg,var(--accent),#3b82f6);border:none;padding:8px 12px;border-radius:8px;color:#04243a;font-weight:600;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);font-weight:600}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:18px;margin-top:18px}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+    .stat-list{display:flex;gap:12px;flex-wrap:wrap}
+    .stat{flex:1;background:var(--glass);padding:10px;border-radius:10px;min-width:120px}
+    .muted{color:var(--muted);font-size:13px}
+    canvas{width:100%!important;height:320px!important}
+    .sidebar .small{font-size:13px;color:var(--muted)}
+    .history{max-height:260px;overflow:auto;margin-top:10px;border-radius:8px;padding:6px;background:rgba(255,255,255,0.01)}
+    .row{display:flex;justify-content:space-between;gap:8px;padding:8px;border-radius:6px}
+    .danger{background:linear-gradient(90deg,#f87171,#fb7185);color:#06121a}
+    footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
+    @media (max-width:920px){.grid{grid-template-columns:1fr;}.controls{flex-direction:column;align-items:stretch}input[type=text]{width:100%}}
