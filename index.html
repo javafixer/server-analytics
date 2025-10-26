@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Minecraft Server List</title>
 <style>
 :root{
@@ -21,8 +21,41 @@ h1{font-size:26px;margin:0}
 input[type=text]{flex:1;background:var(--card);border:1px solid rgba(255,255,255,0.03);padding:10px 12px;border-radius:10px;color:inherit;min-width:200px}
 button{background:linear-gradient(180deg,var(--accent),#3b82f6);border:none;padding:10px 16px;border-radius:10px;color:#04243a;font-weight:600;cursor:pointer;transition:0.2s}
 button:hover{opacity:0.85}
-.grid{display:grid;grid-template-columns:1fr 360px;gap:18px;margin-top:24px}
-.server-card{display:flex;flex-direction:column;gap:8px;transition:0.2s;border:1px solid rgba(255,255,255,0.03);padding:14px;border-radius:12px;background:var(--card);}
+
+/* main grid: left = server list, right = sidebar */
+.grid{
+    display:grid;
+    grid-template-columns:1fr 360px;
+    gap:18px;
+    margin-top:24px;
+    align-items:start; /* ensure left and right align at top */
+}
+
+/* server list now uses an internal responsive grid so cards wrap */
+#serverList{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap:18px;
+    align-content:start;
+    /* allow it to scroll on short viewports so sidebar stays visible */
+    max-height: calc(100vh - 200px);
+    overflow:auto;
+    padding-right:6px; /* prevent content hitting scrollbar */
+}
+
+/* keep consistent card sizing so layout doesn't jump */
+.server-card{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    transition:0.2s;
+    border:1px solid rgba(255,255,255,0.03);
+    padding:14px;
+    border-radius:12px;
+    background:var(--card);
+    min-height:120px; /* keeps card heights consistent */
+    justify-content:space-between;
+}
 .server-card:hover{border-color:var(--accent);transform:translateY(-2px)}
 .server-card h2{margin:0;font-size:20px}
 .server-card .players{font-size:14px;color:var(--muted)}
@@ -33,11 +66,28 @@ button:hover{opacity:0.85}
 .muted{color:var(--muted);font-size:13px}
 .history{max-height:260px;overflow:auto;margin-top:10px;border-radius:8px;padding:6px;background:rgba(255,255,255,0.01)}
 .row{display:flex;justify-content:space-between;gap:8px;padding:8px;border-radius:6px}
-footer{margin-top:28px;color:var(--muted);font-size:13px;text-align:center}
+
+/* make sidebar sticky so it doesn't get pushed below long lists */
+.sidebar{
+    position:relative;
+}
+.sidebar .card{
+    position:sticky;
+    top:28px;
+}
+
+/* small screens: collapse to single column and restore natural flow */
 @media (max-width:920px){
     .grid{grid-template-columns:1fr;}
     .controls{flex-direction:column;align-items:stretch}
     input[type=text]{width:100%}
+    #serverList{
+        grid-template-columns: 1fr; /* single column on small screens */
+        max-height: none;
+        overflow:visible;
+        padding-right:0;
+    }
+    .sidebar .card{position:static; top:auto;}
 }
 </style>
 </head>
@@ -49,13 +99,12 @@ footer{margin-top:28px;color:var(--muted);font-size:13px;text-align:center}
             <input id="serverSearch" type="text" placeholder="Search servers...">
             <button id="searchBtn">Search</button>
             <button id="submit">Submit Server</button>
-            
         </div>
     </header>
 
     <div class="grid">
-        <!-- Server list -->
-        <div id="serverList"></div>
+        <!-- Server list (left column) -->
+        <div id="serverList" aria-live="polite">
 
 
         <!-- Sidebar -->
@@ -79,12 +128,12 @@ footer{margin-top:28px;color:var(--muted);font-size:13px;text-align:center}
             </div>
         </div>
     </div>
-
-    <footer>
-    craft server analytics 2025
-    </footer>
 </div>
-
+<footer>
+    <div class="container" style="text-align:left; padding:1px; font-size:14px; color:var(--muted);">
+        &copy; Craftanalytics 2025. fetched from public servers.
+    </div>
+</footer>
 <!-- Include your java.js -->
 <script src="java.js"></script>
 <script>
@@ -114,7 +163,8 @@ async function updateServerList(){
     });
 
     document.getElementById('totalPlayers').textContent = totalPlayers;
-    document.getElementById('topServer').textContent = topServer.name;
+    document.getElementById('topServer').textContent = topServer.name || '—';
+    document.getElementById('server').textContent = results.length;
 }
 
 // Run after DOM is loaded
@@ -129,7 +179,7 @@ function makeServerCardsClickable(){
         const addr = card.dataset.addr;
         card.style.cursor = 'pointer';
         card.addEventListener('click', ()=>{
-            // Navigate to ana.html with query ?server=...
+            // Navigate to analytics.html with query ?server=...
             window.location.href = `analytics.html?${encodeURIComponent(addr)}`;
         });
     });
@@ -137,10 +187,9 @@ function makeServerCardsClickable(){
 
 // Run after DOM is loaded
 document.addEventListener('DOMContentLoaded', makeServerCardsClickable);
-
 </script>
 <script>
-        document.getElementById('submit').addEventListener('click', function() {
+    document.getElementById('submit').addEventListener('click', function() {
         window.location.href = 'submit.html';
     });
 </script>
