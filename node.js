@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 const app = express();
-const PORT = 80;
+const PORT = 8000;
 const fs = require('fs');
 const { status } = require('minecraft-server-util'); // Minecraft ping
 app.use(express.json()); // <--- THIS IS REQUIRED
@@ -138,3 +138,4 @@ app.get('/api/check', async (req, res) => {
         res.json({ online: false });
     }
 });
+
