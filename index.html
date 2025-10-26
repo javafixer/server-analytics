@@ -102,10 +102,17 @@ button:hover{opacity:0.85}
         </div>
     </header>
 
-    <div class="grid">
+     <div class="grid">
         <!-- Server list (left column) -->
         <div id="serverList" aria-live="polite">
+            <!-- Example server card(s) — keep or populate dynamically -->
+            <div class="server-card" data-addr="play.example.com">
+                <h2>Example Server</h2>
+                <div class="players">—</div>
+                <div class="status">—</div>
+            </div>
 
+        </div> <!-- ← ADDED: close #serverList so sidebar becomes the right column -->
 
         <!-- Sidebar -->
         <div class="sidebar">
@@ -123,6 +130,11 @@ button:hover{opacity:0.85}
                     <div class="stat">
                         <div>Top Server</div>
                         <div id="topServer">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
                     </div>
                 </div>
             </div>
@@ -193,6 +205,141 @@ document.addEventListener('DOMContentLoaded', makeServerCardsClickable);
         window.location.href = 'submit.html';
     });
 </script>
+<script>
+// --- Status helpers -------------------------------------------------------
+async function fetchStatus(addr){
+    // Try a public Minecraft status API (mcsrvstat.us). If it fails, fallback to demoStatus.
+    try {
+        const resp = await fetch(`https://api.mcsrvstat.us/2/${encodeURIComponent(addr)}`);
+        if (!resp.ok) throw new Error('status API responded non-OK');
+        const data = await resp.json();
+
+        // Normalize the fields from common shapes
+        // mcsrvstat.us typically returns: { online: true, players: { online: 5, max: 100 }, hostname: "..." }
+        const playersOnline = Number(data.players?.online ?? data.players ?? 0) || 0;
+        const maxPlayers = Number(data.players?.max ?? 0) || 0;
+        const name = data.hostname || (data.motd && (data.motd.clean || data.motd.html || []).join(' ')) || addr;
+
+        return {
+            players: playersOnline,
+            maxplayers: maxPlayers || null, // null means unknown
+            name: name
+        };
+    } catch (err) {
+        // network error or parsing issue — fall back to demo
+        return demoStatus(addr);
+    }
+}
+
+function demoStatus(addr){
+    // Minimal fallback so UI doesn't break
+    return {
+        players: 0,
+        maxplayers: null,
+        name: addr
+    };
+}
+
+// Small util to safely set element text
+function setTextSafe(selectorOrElem, text){
+    const el = (typeof selectorOrElem === 'string') ? document.querySelector(selectorOrElem) : selectorOrElem;
+    if (el) el.textContent = text;
+}
+
+// --- Main update logic ---------------------------------------------------
+async function updateServerList(){
+    const serverCards = Array.from(document.querySelectorAll('.server-card'));
+    // If there are no server cards, show zeros and return early
+    if (serverCards.length === 0) {
+        setTextSafe('#server', '0');
+        setTextSafe('#totalPlayers', '0');
+        setTextSafe('#topServer', '—');
+        return;
+    }
+
+    // Map each card to a promise that always resolves to a normalized status object
+    const promises = serverCards.map(card => {
+        const addr = card.dataset.addr || card.getAttribute('data-addr') || 'unknown';
+        return fetchStatus(addr)
+            .catch(()=> demoStatus(addr))
+            .then(status => {
+                // Defensive normalization
+                const players = Number(status.players) || 0;
+                const maxplayers = (status.maxplayers == null) ? '—' : status.maxplayers;
+                const name = status.name || addr;
+
+                // Update that card's UI (if elements exist)
+                const playersEl = card.querySelector('.players');
+                const statusEl = card.querySelector('.status');
+                const titleEl = card.querySelector('h2');
+
+                if (playersEl) playersEl.textContent = `${players} / ${maxplayers} players online`;
+                if (statusEl) {
+                    statusEl.textContent = players > 0 ? 'Online' : 'Offline';
+                    statusEl.style.color = players > 0 ? '#34d399' : '#f87171';
+                }
+                if (titleEl && (!titleEl.textContent || titleEl.textContent.trim() === '')) {
+                    titleEl.textContent = name;
+                }
+
+                // Return normalized object for aggregation
+                return { players, maxplayers: (maxplayers === '—' ? null : Number(maxplayers)), name };
+            });
+    });
+
+    const results = await Promise.all(promises);
+
+    // Aggregate stats
+    let totalPlayers = 0;
+    let topServer = { name: '—', players: -1 };
+
+    results.forEach(r => {
+        totalPlayers += Number(r.players || 0);
+        if (Number(r.players || 0) > topServer.players) {
+            topServer = { name: r.name || '—', players: Number(r.players || 0) };
+        }
+    });
+
+    // Always use the number of server cards for "Total Servers" (more accurate than results.length if DOM changed)
+    const totalServers = serverCards.length;
+
+    setTextSafe('#totalPlayers', String(totalPlayers));
+    setTextSafe('#topServer', topServer.name || '—');
+    setTextSafe('#server', String(totalServers));
+}
+
+// Run after DOM is loaded
+document.addEventListener('DOMContentLoaded', updateServerList);
+
+// Optional: refresh periodically every 60 seconds
+// Uncomment if you want auto-refresh:
+// setInterval(updateServerList, 60_000);
+</script>
+
+<script>
+// --- Clickable server cards (unchanged, but included for completeness) ----
+function makeServerCardsClickable(){
+    const serverCards = document.querySelectorAll('.server-card');
+    serverCards.forEach(card=>{
+        const addr = card.dataset.addr || card.getAttribute('data-addr') || '';
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', ()=>{
+            // Navigate to analytics.html with query ?server=...
+            if (addr) {
+                window.location.href = `analytics.html?${encodeURIComponent(addr)}`;
+            }
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', makeServerCardsClickable);
+
+// Submit button behavior
+document.addEventListener('DOMContentLoaded', function(){
+    const submitBtn = document.getElementById('submit');
+    if (submitBtn) submitBtn.addEventListener('click', ()=> window.location.href = 'submit.html');
+});
+</script>
+
 </body>
 </html>
-
