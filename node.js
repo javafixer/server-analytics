@@ -1,57 +1,66 @@
 const express = require('express');
 const path = require('path');
-const app = express();
-const PORT = 8000;
 const fs = require('fs');
-const { status } = require('minecraft-server-util'); // Minecraft ping
-app.use(express.json()); // <--- THIS IS REQUIRED
+const { status } = require('minecraft-server-util');
+const { parse } = require('jsonc-parser'); // Lenient JSON parser
 
-// Serve static files (HTML, CSS, JS)
+const app = express();
+const PORT = 80;
+app.use(express.json());
+
+// ------------------- HELPERS -------------------
+
+// Repair JSON files with nested objects, using jsonc-parser
+function repairJsonArray(filePath) {
+    if (!fs.existsSync(filePath)) return [];
+
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const errors = [];
+    const data = parse(content, errors, { allowTrailingComma: true });
+
+    if (errors.length) {
+        console.warn(`Found ${errors.length} JSON errors in ${filePath}, attempting repair.`);
+    }
+
+    if (!Array.isArray(data)) return [];
+    return data;
+}
+
+// Atomically write JSON to prevent partial corruption
+function safeWriteJson(filePath, data) {
+    const tmpFile = filePath + '.tmp';
+    fs.writeFileSync(tmpFile, JSON.stringify(data, null, 2));
+    fs.renameSync(tmpFile, filePath);
+}
+
+// ------------------- STATIC FILES -------------------
+
 app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/java.js', (req, res) => res.sendFile(path.join(__dirname, "java.js")));
+app.get('/styles.css', (req, res) => res.sendFile(path.join(__dirname, "styles.css")));
+app.get('/analytics.html', (req, res) => res.sendFile(path.join(__dirname, "analytics.html")));
+app.get('/mc_history.json', (req, res) => res.sendFile(path.join(__dirname, "mc_history.json")));
+app.get('/servers.json', (req, res) => res.sendFile(path.join(__dirname, "servers.json")));
+app.get('/submit.html', (req, res) => res.sendFile(path.join(__dirname, "submit.html")));
 
-// Optional: default route
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-app.get('/java.js', (req, res) => {
-    res.sendFile(path.join(__dirname, "java.js"));
-});
-app.get('/styles.css', (req, res) => {
-    res.sendFile(path.join(__dirname, "styles.css"));
-});
-app.get('/analytics.html', (req, res) => {
-    res.sendFile(path.join(__dirname, "analytics.html"));
-});
-app.get('/mc_history.json', (req, res) => {
-    res.sendFile(path.join(__dirname, "mc_history.json"));
-});
-app.get('/servers.json', (req, res) => {
-    res.sendFile(path.join(__dirname, "servers.json"));
-});
-app.get('/submit.html', (req, res) => {
-    res.sendFile(path.join(__dirname, "submit.html"));
-});
+// ------------------- SAVE STATS -------------------
+
 app.post('/save-stats', (req, res) => {
-    console.log('Received body:', req.body); // should now show an object
+    console.log('Received body:', req.body);
     const point = req.body;
 
     if (!point || typeof point.players === 'undefined') {
         return res.status(400).json({ error: 'Invalid data' });
     }
 
-    const filePath = path.join(__dirname, 'mc_history.json');
-    let history = [];
-
-    if (fs.existsSync(filePath)) {
-        try {
-            history = JSON.parse(fs.readFileSync(filePath));
-        } catch {}
-    }
+    const historyPath = path.join(__dirname, 'mc_history.json');
+    let history = repairJsonArray(historyPath);
 
     history.push(point);
 
     try {
-        fs.writeFileSync(filePath, JSON.stringify(history, null, 2));
+        safeWriteJson(historyPath, history);
         res.json({ status: 'ok', point });
     } catch (err) {
         console.error(err);
@@ -59,9 +68,11 @@ app.post('/save-stats', (req, res) => {
     }
 });
 
+// ------------------- FETCH SERVER STATUS -------------------
+
 async function fetchServerStatus(server) {
     try {
-        const result = await status(server.address, 25565, { timeout: 1000 }); // default port 25565
+        const result = await status(server.address, 25565, { timeout: 1000 });
         return {
             t: Date.now(),
             players: result.players.online,
@@ -78,14 +89,16 @@ async function fetchServerStatus(server) {
     }
 }
 
+// ------------------- AUTO FETCH LOOP -------------------
+
 async function autoFetchLoop() {
     const serversPath = path.join(__dirname, 'servers.json');
     const historyPath = path.join(__dirname, 'mc_history.json');
 
     if (!fs.existsSync(serversPath)) return console.error('servers.json not found!');
 
-    const servers = JSON.parse(fs.readFileSync(serversPath));
-    let history = fs.existsSync(historyPath) ? JSON.parse(fs.readFileSync(historyPath)) : [];
+    const servers = repairJsonArray(serversPath);
+    let history = repairJsonArray(historyPath);
 
     for (const server of servers) {
         const point = await fetchServerStatus(server);
@@ -95,38 +108,34 @@ async function autoFetchLoop() {
         }
     }
 
-    fs.writeFileSync(historyPath, JSON.stringify(history, null, 2));
+    safeWriteJson(historyPath, history);
 }
 
-// Fetch every 1 second
 setInterval(autoFetchLoop, 10000);
-autoFetchLoop(); // initia  l fetch
+autoFetchLoop(); // initial fetch
 
-// Start server
-app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
+// ------------------- SUBMIT NEW SERVER -------------------
+
 const serversPath = path.join(__dirname, 'servers.json');
 
-// Submit new server
 app.post('/api/submit', (req, res) => {
     const { name, address } = req.body;
     if (!name || !address) return res.status(400).json({ error: 'Missing name or address' });
 
-    let servers = [];
-    if (fs.existsSync(serversPath)) {
-        servers = JSON.parse(fs.readFileSync(serversPath));
-    }
+    let servers = repairJsonArray(serversPath);
 
-    // Prevent duplicates
     if (servers.some(s => s.address === address)) {
         return res.status(400).json({ error: 'Server already exists' });
     }
 
     servers.push({ name, address });
-    fs.writeFileSync(serversPath, JSON.stringify(servers, null, 2));
+    safeWriteJson(serversPath, servers);
+
     res.json({ status: 'ok' });
 });
 
-// Check server status
+// ------------------- CHECK SERVER STATUS -------------------
+
 app.get('/api/check', async (req, res) => {
     const ip = req.query.ip;
     if (!ip) return res.status(400).json({ online: false });
@@ -139,3 +148,6 @@ app.get('/api/check', async (req, res) => {
     }
 });
 
+// ------------------- START SERVER -------------------
+
+app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
