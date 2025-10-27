@@ -147,7 +147,23 @@ app.get('/api/check', async (req, res) => {
         res.json({ online: false });
     }
 });
+// serve explicit pages if needed
+app.get('/404.html', (req, res) => res.sendFile(path.join(__dirname, '404.html')));
+app.get('/denied.html', (req, res) => res.sendFile(path.join(__dirname, 'denied.html')));
 
+// error handler for thrown errors with status 403
+app.use((err, req, res, next) => {
+  if (err && err.status === 403) {
+    return res.status(403).sendFile(path.join(__dirname, 'denied.html'));
+  }
+  next(err);
+});
+
+// catch-all 404 for any unmatched route
+app.use((req, res) => {
+  res.status(404).sendFile(path.join(__dirname, '404.html'));
+});
+    
 // ------------------- START SERVER -------------------
 
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
