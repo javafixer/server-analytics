@@ -5,7 +5,7 @@ const { status } = require('minecraft-server-util');
 const { parse } = require('jsonc-parser'); // Lenient JSON parser
 
 const app = express();
-const PORT = 80;
+const PORT = 8000;
 app.use(express.json());
 
 // ------------------- HELPERS -------------------
@@ -167,3 +167,4 @@ app.use((req, res) => {
 // ------------------- START SERVER -------------------
 
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
+
