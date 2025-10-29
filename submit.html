@@ -15,6 +15,7 @@
         <div class="controls" style="flex-direction:column;">
             <input type="text" id="server-name" placeholder="Server Name">
             <input type="text" id="server-ip" placeholder="Server IP (e.g., play.example.com)">
+            <input type="text" id="email" placeholder="emaiil (optional)">
             <div id="status-result" class="muted" style="margin-top:10px;">Status: Unknown</div>
             <button id="submit-server" disabled>Submit Server</button>
             <button id="back">back</button>
@@ -73,13 +74,14 @@ document.getElementById('submit-server').addEventListener('click', async () => {
 
     const name = document.getElementById('server-name').value.trim();
     const ip = document.getElementById('server-ip').value.trim();
+    const email = document.getElementById('email').value.trim();
     if (!name || !ip) return alert('Enter both name and IP.');
 
     try {
         const res = await fetch('/api/submit', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ name, address: ip })
+            body: JSON.stringify({ name, address: ip, email: email})
         });
         const data = await res.json();
         if (res.ok) {

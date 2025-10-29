@@ -6,7 +6,9 @@
   <title>Craft Server Analytics</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-
+<style>
+  :root{--bg:#0f1724;--card1:#0b1220;--muted:#94a3b8;--accent:#60a5fa;--glass:rgba(255,255,255,0.03)}
+</style>
 </head>
 <body>
   <div class="container" id="app">
@@ -28,8 +30,9 @@
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <div>
-              <div id="serverName" style="font-weight:700">—</div>
+              <div id="serverName" style="font-weight:700">—</div> <!-- Server Name  must be added soon-->
               <div class="muted" id="serverAddr">—</div>
+              <div class="muted" id="email">—</div>
             </div>
             <div class="muted" id="lastChecked">Last checked: —</div>
           </div>
@@ -91,8 +94,8 @@
             <div>
               <div style="margin-top:6px"><button id="demoBtn" class="ghost"></button></div>
               <select id="timeFilter" style="margin-left:8px;padding:6px;border-radius:8px;">
-  <option value="all">All time</option>
   <option value="today">Today</option>
+  <option value="all">All time cpu intense</option>
   <option value="hour">This hour</option>
   <option value="year">This year</option>
 </select>
@@ -100,6 +103,27 @@
             </div>
           </div>
         </div>
+
+<div class="card">
+          <div style="font-weight:700">server description</div>
+          <div style="margin-top:20px" class="small">
+            <p>Welcome to the analytics panel.</p>
+            <p>The time lets you view the server analytics for today this year and all time</p>
+            <p>Note that you cannot see the analytics if you havent submitted your server.</p>
+            <!--<p style="margin-top:8px">Demo mode: click <em>Check Now</em> without a reachable server to see a fake demo dataset.</p> -->
+          </div>
+          <hr style="opacity:0.06;margin:10px 0" />
+          <div style="display:flex;gap:8px;align-items:center;justify-content:space-between">
+           <div>
+            
+            </div>
+            <div>
+
+
+
+
+
+
         <!-- Sidebar -->
       <!--  <div class="card" style="margin-top:12px">
           <div style="font-weight:700">Notes</div>  
@@ -184,5 +208,9 @@ setInterval(fetchAndUpdate, 10000);
     });
 </script> 
 
+  <script>
+    // JavaScript code for analytics.html
+    // will add email display logic here soon
+  </script>
 </body>
 </html>

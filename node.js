@@ -5,7 +5,7 @@ const { status } = require('minecraft-server-util');
 const { parse } = require('jsonc-parser'); // Lenient JSON parser
 
 const app = express();
-const PORT = 8000;
+const PORT = 80;
 app.use(express.json());
 
 // ------------------- HELPERS -------------------
@@ -43,7 +43,7 @@ app.get('/analytics.html', (req, res) => res.sendFile(path.join(__dirname, "anal
 app.get('/mc_history.json', (req, res) => res.sendFile(path.join(__dirname, "mc_history.json")));
 app.get('/servers.json', (req, res) => res.sendFile(path.join(__dirname, "servers.json")));
 app.get('/submit.html', (req, res) => res.sendFile(path.join(__dirname, "submit.html")));
-
+app.get('/chart.js', (req, res) => res.sendFile(path.join(__dirname, 'chart.js')));
 // ------------------- SAVE STATS -------------------
 
 app.post('/save-stats', (req, res) => {
@@ -119,7 +119,7 @@ autoFetchLoop(); // initial fetch
 const serversPath = path.join(__dirname, 'servers.json');
 
 app.post('/api/submit', (req, res) => {
-    const { name, address } = req.body;
+    const { name, address, email } = req.body;
     if (!name || !address) return res.status(400).json({ error: 'Missing name or address' });
 
     let servers = repairJsonArray(serversPath);
@@ -128,7 +128,7 @@ app.post('/api/submit', (req, res) => {
         return res.status(400).json({ error: 'Server already exists' });
     }
 
-    servers.push({ name, address });
+    servers.push({ name, address, email });
     safeWriteJson(serversPath, servers);
 
     res.json({ status: 'ok' });
@@ -167,4 +167,3 @@ app.use((req, res) => {
 // ------------------- START SERVER -------------------
 
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
-

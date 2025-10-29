@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>403 — Access Denied</title>
+    <style>
+        :root{--bg:#0f1724;--card:#111827;--accent:#ef4444;--muted:#9ca3af;color-scheme:dark}
+        *{box-sizing:border-box}
+        html,body{height:100%}
+        body{
+            margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+            background:linear-gradient(180deg,#071025 0%,#0b1220 100%); color:#fff;
+            display:flex; align-items:center; justify-content:center; padding:24px;
+        }
+        .card{
+            background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01));
+            border:1px solid rgba(255,255,255,0.04);
+            border-radius:12px; padding:36px; max-width:720px; width:100%;
+            box-shadow:0 10px 30px rgba(2,6,23,0.6);
+        }
+        h1{margin:0 0 8px; font-size:clamp(24px,4vw,40px)}
+        p{margin:8px 0; color:var(--muted)}
+        .code{display:inline-block; background:rgba(255,255,255,0.03); padding:6px 10px; border-radius:6px; color:#fff; font-weight:600}
+        .actions{margin-top:20px}
+        .btn{
+            display:inline-block; text-decoration:none; margin-right:10px; padding:10px 14px;
+            border-radius:8px; background:#111827; color:#fff; border:1px solid rgba(255,255,255,0.04);
+            font-weight:600;
+        }
+        .btn.secondary{background:transparent; color:var(--muted); border:1px dashed rgba(255,255,255,0.03)}
+        @media (max-width:440px){ .card{padding:20px} }
+    </style>
+</head>
+<body>
+    <main class="card" role="main" aria-labelledby="title">
+        <h1 id="title">403 — No access</h1>
+        <p class="code">Access denied</p>
+        <p>You do not have permission to view this page. If you think this is a mistake, contact the site administrator</p>
+        <div class="actions">
+            <a class="btn" href="javascript:history.back()">Go back</a>
+            <a class="btn secondary" href="/">Home</a>
+        </div>
+    </main>
+</body>
+</html></div>

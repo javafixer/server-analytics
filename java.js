@@ -116,32 +116,7 @@ function importCSVFile(file){
   reader.readAsText(file);
 }
 
-// --- Server fetch (public API) ---
-async function fetchStatus(addr){
-  const host = addr.trim();
-  if(!host) return null;
-  try{
-    const url = `https://api.mcsrvstat.us/2/${encodeURIComponent(host)}`;
-    const res = await fetch(url);
-    if(!res.ok) throw new Error('status ' + res.status);
-    const data = await res.json();
-    const players = data.players && typeof data.players.online !== 'undefined' ? data.players.online : (data.players||[]).length || 0;
-    const maxplayers = data.players && typeof data.players.max !== 'undefined' ? data.players.max : (data.players?data.players.length:0);
-    return {
-      name: data.hostname || host,
-      addr: host,
-      players: players,
-      maxplayers: maxplayers || null,
-      version: data.version || data.software || '—',
-      motd: (data.motd && (data.motd.clean||data.motd.raw||data.motd.html)) || '—',
-      ping: data.debug && data.debug.ping ? data.debug.ping : null,
-      raw: data
-    };
-  }catch(err){
-    console.warn('Fetch status failed, returning null', err);
-    return null;
-  }
-}
+
 
 function demoStatus(host){
   const base = Math.round(20 + 80*Math.abs(Math.sin(Date.now()/60000)) + (Math.random()*12 -6));
@@ -287,4 +262,4 @@ async function fetchAndUpdate() {
 }
 
 // Fetch every second
-setInterval(fetchAndUpdate, 1000);
+setInterval(fetchAndUpdate, 5000);
